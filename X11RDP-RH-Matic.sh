@@ -43,7 +43,7 @@ SOURCE_DIR=$(rpm --eval %{_sourcedir})
 
 # variables for this utility
 TARGETS="xrdp x11rdp"
-META_DEPENDS="rpm-build rpmdevtools"
+META_DEPENDS="rpm-build rpmdevtools yum-plugin-versionlock"
 FETCH_DEPENDS="ca-certificates git wget"
 EXTRA_SOURCE="xrdp.init xrdp.sysconfig xrdp.logrotate xrdp-pam-auth.patch buildx_patch.diff x11_file_list.patch sesman.ini.master.patch sesman.ini.devel.patch"
 XRDP_CONFIGURE_ARGS="--enable-fuse --enable-rfxcodec --enable-jpeg --disable-static"
@@ -488,6 +488,11 @@ first_of_all()
 	fi
 }
 
+show_greeting()
+{
+	less files/pkg-message
+}
+
 #
 #  main routines
 #
@@ -502,6 +507,7 @@ install_targets_depends
 build_rpm
 remove_installed_xrdp
 install_built_xrdp
+show_greeting
 
 [ -f .PID ] && [ "$(cat .PID)" = $$ ] && rm -f .PID
 exit 0

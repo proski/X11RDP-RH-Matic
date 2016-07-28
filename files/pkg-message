@@ -1,0 +1,7 @@
+Congratulations! xrdp has been successfully built.
+
+Consider versionlocking xrdp to prevent xrdp unexpectedly being replaced
+by distribution's xrdp.
+
+  # yum versionlock add xrdp 
+
