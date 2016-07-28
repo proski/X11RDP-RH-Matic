@@ -443,7 +443,7 @@ install_targets_depends()
 first_of_all()
 {
 	clear
-	if [ ! -f X11RDP-RH-Matic.sh ]; then
+	if [ "$(dirname $(readlink -f $0))" != "$PWD" ]; then
 		echo_stderr "Make sure you are in X11RDP-RH-Matic directory." 2>&1
 		error_exit
 	fi
