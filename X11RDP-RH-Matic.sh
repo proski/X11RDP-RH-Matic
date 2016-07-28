@@ -402,6 +402,19 @@ remove_installed_xrdp()
 
 	# uninstall xrdp first if installed
 	for f in $TARGETS ; do
+		case "$t" in
+			xrdp)
+				# I know "systemctl" for systemd but "service" can be applied in both case
+				service xrdp status > /dev/null 2>&1
+				if [ $? -eq 0 ]; then
+					echo_stderr
+					echo_stderr "xrdp is already running. are you sure want to uninstall?"
+					echo_stderr "press enter TWICE to continue..."
+					read; read
+				fi
+			;;
+		esac
+
 		echo -n "Removing installed $f... "
 			check_if_installed $f
 			if [ $? -eq 0 ]; then
