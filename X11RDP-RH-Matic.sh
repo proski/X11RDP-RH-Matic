@@ -40,6 +40,7 @@ SUDO_LOG=${WRKDIR}/sudo.log
 RPMS_DIR=$(rpm --eval %{_rpmdir}/%{_arch})
 BUILD_DIR=$(rpm --eval %{_builddir})
 SOURCE_DIR=$(rpm --eval %{_sourcedir})
+X11RDPBASE=/usr/local/x11rdp
 
 # variables for this utility
 TARGETS="xrdp x11rdp"
@@ -171,7 +172,7 @@ generate_spec()
 	${WRKDIR}/xrdp.spec || error_exit
 
 	sed -i.bak \
-	-e "s|%%X11RDPBASE%%|/opt/X11rdp|g" \
+	-e "s|%%X11RDPBASE%%|$X11RDPBASE|g" \
 	-e "s|make -j1|${makeCommand}|g" \
 	${WRKDIR}/x11rdp.spec || error_exit
 
@@ -204,15 +205,13 @@ clone()
 
 x11rdp_dirty_build()
 {
-	X11RDPBASE=/opt/X11rdp
-
 	# remove installed x11rdp before build x11rdp
 	check_if_installed x11rdp
 	if [ $? -eq 0 ]; then
 		SUDO_CMD $DNF -y remove x11rdp >> $DNF_LOG || error_exit
 	fi
 
-	# clean /opt/X11rdp
+	# clean X11RDPBASE
 	if [ -d $X11RDPBASE ]; then
 		SUDO_CMD find $X11RDPBASE -delete
 	fi
