@@ -52,7 +52,7 @@ XRDP_CONFIGURE_ARGS="--enable-fuse --enable-rfxcodec --enable-jpeg --disable-sta
 # flags
 PARALLELMAKE=true   # increase make jobs
 INSTALL_XRDP=true   # install built package after build
-GIT_USE_HTTPS=false # Use firewall-friendly https:// instead of git:// to fetch git submodules
+GIT_USE_HTTPS=true  # Use firewall-friendly https:// instead of git:// to fetch git submodules
 
 # substitutes
 XORGXRDPDEBUG_SUB="# "
