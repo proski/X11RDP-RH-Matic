@@ -19,7 +19,7 @@ if ! hash sudo 2> /dev/null ; then
 	echo "${0}: sudo not found." 1>&2
 	echo 1>&2
 	echo 'This utility requires sudo to gain root privileges on demand.' 1>&2
-	echo 'run `yum -y install sudo` in root privileges before run this utility.' 1>&2
+	echo 'run `dnf -y install sudo` or `yum -y install sudo` as root, then run this utility again.' 1>&2
 	exit 1
 fi
 
@@ -34,7 +34,7 @@ GH_BRANCH=master
 GH_URL=https://github.com/${GH_ACCOUNT}/${GH_PROJECT}.git
 
 WRKDIR=$(mktemp --directory --suffix .X11RDP-RH-Matic)
-YUM_LOG=${WRKDIR}/yum.log
+DNF_LOG=${WRKDIR}/dnf.log
 BUILD_LOG=${WRKDIR}/build.log
 SUDO_LOG=${WRKDIR}/sudo.log
 RPMS_DIR=$(rpm --eval %{_rpmdir}/%{_arch})
@@ -89,7 +89,7 @@ error_exit()
 	echo_stderr "See logs to get further information:"
 	echo_stderr "	$BUILD_LOG"
 	echo_stderr "	$SUDO_LOG"
-	echo_stderr "	$YUM_LOG"
+	echo_stderr "	$DNF_LOG"
 	echo_stderr "Exitting..."
 	[ -f .PID ] && [ "$(cat .PID)" = $$ ] && rm -f .PID
 	exit 1
@@ -113,7 +113,7 @@ install_depends()
 		else
 			echo "no"
 			echo -n "Installing $f... "
-			SUDO_CMD yum -y install $f >> $YUM_LOG && echo "done" || error_exit
+			SUDO_CMD $DNF -y install $f >> $DNF_LOG && echo "done" || error_exit
 		fi
 		sleep 0.1
 	done
@@ -209,7 +209,7 @@ x11rdp_dirty_build()
 	# remove installed x11rdp before build x11rdp
 	check_if_installed x11rdp
 	if [ $? -eq 0 ]; then
-		SUDO_CMD yum -y remove x11rdp >> $YUM_LOG || error_exit
+		SUDO_CMD $DNF -y remove x11rdp >> $DNF_LOG || error_exit
 	fi
 
 	# clean /opt/X11rdp
@@ -269,6 +269,15 @@ build_rpm()
 	done
 
 	echo "Built RPMs are located in $RPMS_DIR."
+}
+
+check_tools()
+{
+	if test -n "$(rpm -qi dnf 2>/dev/null)"; then
+		DNF=dnf
+	else
+		DNF=yum
+	fi
 }
 
 parse_commandline_args()
@@ -359,7 +368,7 @@ OPTIONS
 			fi
 			OLDWRKDIR=${WRKDIR}
 			WRKDIR=$(mktemp --directory --suffix .X11RDP-RH-Matic --tmpdir="${2}") || exit 1
-			YUM_LOG=${WRKDIR}/yum.log
+			DNF_LOG=${WRKDIR}/dnf.log
 			BUILD_LOG=${WRKDIR}/build.log
 			SUDO_LOG=${WRKDIR}/sudo.log
 			rmdir ${OLDWRKDIR}
@@ -405,7 +414,7 @@ remove_installed_xrdp()
 		echo -n "Removing installed $f... "
 			check_if_installed $f
 			if [ $? -eq 0 ]; then
-				SUDO_CMD yum -y remove $f >>  $YUM_LOG || error_exit
+				SUDO_CMD $DNF -y remove $f >>  $DNF_LOG || error_exit
 			fi
 		echo "done"
 	done
@@ -423,9 +432,9 @@ install_built_xrdp()
 			*)
 				RPM_VERSION_SUFFIX=$(rpm --eval -${XRDPVER}+${GH_BRANCH//-/_}-1%{?dist}.%{_arch}.rpm) ;;
 		esac
-		SUDO_CMD yum -y localinstall \
+		SUDO_CMD $DNF -y install \
 			${RPMS_DIR}/${t}${RPM_VERSION_SUFFIX} \
-			>> $YUM_LOG && echo "done" || error_exit
+			>> $DNF_LOG && echo "done" || error_exit
 	done
 }
 
@@ -471,7 +480,7 @@ first_of_all()
 	else
 		echo 'no'
 		echo -n 'Installing yum-utils... '
-		SUDO_CMD yum -y install yum-utils >> $YUM_LOG && echo "done" || exit 1
+		SUDO_CMD $DNF -y install yum-utils >> $DNF_LOG && echo "done" || exit 1
 	fi
 }
 
@@ -479,6 +488,7 @@ first_of_all()
 #  main routines
 #
 
+check_tools
 parse_commandline_args $@
 first_of_all
 install_depends $META_DEPENDS $FETCH_DEPENDS
