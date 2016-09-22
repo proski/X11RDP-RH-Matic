@@ -14,14 +14,14 @@ if [ $UID -eq 0 ] ; then
 	exit 1
 fi
 
-if ! hash sudo 2> /dev/null ; then
-	# write to stderr 1>&2
-	echo "${0}: sudo not found." 1>&2
-	echo 1>&2
-	echo 'This utility requires sudo to gain root privileges on demand.' 1>&2
-	echo 'run `dnf -y install sudo` or `yum -y install sudo` as root, then run this utility again.' 1>&2
-	exit 1
-fi
+# Check if an rpm package is installed.
+# If not, exit with an error message.
+check_rpm_installed()
+{
+	rpm -q $1 || exit 1
+}
+
+check_rpm_installed sudo
 
 LINE="----------------------------------------------------------------------"
 
@@ -473,14 +473,7 @@ first_of_all()
 
 	# first of all, check if yum-utils installed
 	echo 'First of all, checking for necessary programs to run this script... '
-	echo -n 'Checking for yum-utils... '
-	if hash repoquery 2> /dev/null; then
-		echo 'yes'
-	else
-		echo 'no'
-		echo -n 'Installing yum-utils... '
-		SUDO_CMD $DNF -y install yum-utils >> $DNF_LOG && echo "done" || exit 1
-	fi
+	check_rpm_installed yum-utils
 }
 
 #
