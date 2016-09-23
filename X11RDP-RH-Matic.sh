@@ -399,39 +399,6 @@ calc_cpu_cores()
 	fi
 }
 
-remove_installed_xrdp()
-{
-	$INSTALL_XRDP || return
-
-	# uninstall xrdp first if installed
-	for f in $TARGETS ; do
-		echo -n "Removing installed $f... "
-			check_if_installed $f
-			if [ $? -eq 0 ]; then
-				SUDO_CMD $DNF -y remove $f >>  $DNF_LOG || error_exit
-			fi
-		echo "done"
-	done
-}
-
-install_built_xrdp()
-{
-	$INSTALL_XRDP || return
-
-	for t in $TARGETS ; do
-		echo -n "Installing built $t... "
-		case "$t" in
-			xorg-x11-drv-xrdp)
-				RPM_VERSION_SUFFIX=$(rpm --eval -${XORGXRDPVER}+${GH_BRANCH//-/_}-1%{?dist}.%{_arch}.rpm) ;;
-			*)
-				RPM_VERSION_SUFFIX=$(rpm --eval -${XRDPVER}+${GH_BRANCH//-/_}-1%{?dist}.%{_arch}.rpm) ;;
-		esac
-		SUDO_CMD $DNF -y install \
-			${RPMS_DIR}/${t}${RPM_VERSION_SUFFIX} \
-			>> $DNF_LOG && echo "done" || error_exit
-	done
-}
-
 install_targets_depends()
 {
 	for t in $TARGETS; do
@@ -484,8 +451,6 @@ clone
 generate_spec
 install_targets_depends
 build_rpm
-remove_installed_xrdp
-install_built_xrdp
 
 [ -f .PID ] && [ "$(cat .PID)" = $$ ] && rm -f .PID
 exit 0
