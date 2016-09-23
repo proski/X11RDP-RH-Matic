@@ -17,7 +17,7 @@ fi
 # If not, exit with an error message.
 check_rpm_installed()
 {
-	rpm -q $1 || exit 1
+	rpm -q --whatprovides $1 || exit 1
 }
 
 LINE="----------------------------------------------------------------------"
