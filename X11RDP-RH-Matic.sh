@@ -31,7 +31,6 @@ GH_BRANCH=devel
 GH_URL=https://github.com/${GH_ACCOUNT}/${GH_PROJECT}.git
 
 WRKDIR=$(mktemp --directory --suffix .X11RDP-RH-Matic)
-DNF_LOG=${WRKDIR}/dnf.log
 BUILD_LOG=${WRKDIR}/build.log
 RPMS_DIR=$(rpm --eval %{_rpmdir}/%{_arch})
 BUILD_DIR=$(rpm --eval %{_builddir})
@@ -71,7 +70,6 @@ error_exit()
 	echo_stderr "Oops, something going wrong around line: $BASH_LINENO"
 	echo_stderr "See logs to get further information:"
 	echo_stderr "	$BUILD_LOG"
-	echo_stderr "	$DNF_LOG"
 	echo_stderr "Exitting..."
 	[ -f .PID ] && [ "$(cat .PID)" = $$ ] && rm -f .PID
 	exit 1
@@ -229,15 +227,6 @@ build_rpm()
 	echo "Built RPMs are located in $RPMS_DIR."
 }
 
-check_tools()
-{
-	if test -n "$(rpm -qi dnf 2>/dev/null)"; then
-		DNF=dnf
-	else
-		DNF=yum
-	fi
-}
-
 parse_commandline_args()
 {
 	# If first switch = --help, display the help/usage message then exit.
@@ -322,7 +311,6 @@ OPTIONS
 			fi
 			OLDWRKDIR=${WRKDIR}
 			WRKDIR=$(mktemp --directory --suffix .X11RDP-RH-Matic --tmpdir="${2}") || exit 1
-			DNF_LOG=${WRKDIR}/dnf.log
 			BUILD_LOG=${WRKDIR}/build.log
 			rmdir ${OLDWRKDIR}
 			;;
@@ -393,7 +381,6 @@ first_of_all()
 #  main routines
 #
 
-check_tools
 parse_commandline_args $@
 first_of_all
 install_depends $META_DEPENDS $FETCH_DEPENDS
