@@ -10,7 +10,6 @@ if [ $UID -eq 0 ] ; then
 	echo "${0}:  Never run this utility as root." 1>&2
 	echo 1>&2
 	echo "This utility builds RPMs. Building RPM's as root is seriously dangerous." 1>&2
-	echo "This script will gain root privileges via sudo on demand, then type your password." 1>&2
 	exit 1
 fi
 
@@ -20,8 +19,6 @@ check_rpm_installed()
 {
 	rpm -q $1 || exit 1
 }
-
-check_rpm_installed sudo
 
 LINE="----------------------------------------------------------------------"
 
@@ -36,7 +33,6 @@ GH_URL=https://github.com/${GH_ACCOUNT}/${GH_PROJECT}.git
 WRKDIR=$(mktemp --directory --suffix .X11RDP-RH-Matic)
 DNF_LOG=${WRKDIR}/dnf.log
 BUILD_LOG=${WRKDIR}/build.log
-SUDO_LOG=${WRKDIR}/sudo.log
 RPMS_DIR=$(rpm --eval %{_rpmdir}/%{_arch})
 BUILD_DIR=$(rpm --eval %{_builddir})
 SOURCE_DIR=$(rpm --eval %{_sourcedir})
@@ -65,19 +61,6 @@ XORGXRDP_BUILD_DEPENDS=$(<SPECS/xorg-x11-drv-xrdp.spec.in grep BuildRequires: | 
 # x11rdp
 X11RDP_BUILD_DEPENDS=$(<SPECS/x11rdp.spec.in grep BuildRequires: | awk '{ print $2 }' | tr '\n' ' ')
 
-SUDO_CMD()
-{
-	# sudo's password prompt timeouts 5 minutes by most default settings
-	# to avoid exit this script because of sudo timeout
-	echo_stderr
-	# not using echo_stderr here because output also be written $SUDO_LOG
-	echo "Following command will be executed via sudo:" | tee -a $SUDO_LOG 1>&2
-	echo "	$@" | tee -a $SUDO_LOG 1>&2
-	while ! sudo -v; do :; done
-	sudo $@ | tee -a $SUDO_LOG
-	return ${PIPESTATUS[0]}
-}
-
 echo_stderr()
 {
 	echo $@ 1>&2
@@ -89,7 +72,6 @@ error_exit()
 	echo_stderr "Oops, something going wrong around line: $BASH_LINENO"
 	echo_stderr "See logs to get further information:"
 	echo_stderr "	$BUILD_LOG"
-	echo_stderr "	$SUDO_LOG"
 	echo_stderr "	$DNF_LOG"
 	echo_stderr "Exitting..."
 	[ -f .PID ] && [ "$(cat .PID)" = $$ ] && rm -f .PID
@@ -208,7 +190,7 @@ x11rdp_dirty_build()
 		-e "s/make -j 1/make -j $jobs/g" \
 		-e 's|^download_url=http://server1.xrdp.org/xrdp/X11R7.6|download_url=https://xrdp.vmeta.jp/pub/xrdp/X11R7.6|' \
 		buildx.sh >> $BUILD_LOG 2>&1 && \
-	SUDO_CMD ./buildx.sh $X11RDPBASE >> $BUILD_LOG 2>&1
+	./buildx.sh $X11RDPBASE >> $BUILD_LOG 2>&1
 	) || error_exit
 
 	QA_RPATHS=$[0x0001|0x0002] rpmbuild -ba ${WRKDIR}/x11rdp.spec >> $BUILD_LOG 2>&1 || error_exit
@@ -347,7 +329,6 @@ OPTIONS
 			WRKDIR=$(mktemp --directory --suffix .X11RDP-RH-Matic --tmpdir="${2}") || exit 1
 			DNF_LOG=${WRKDIR}/dnf.log
 			BUILD_LOG=${WRKDIR}/build.log
-			SUDO_LOG=${WRKDIR}/sudo.log
 			rmdir ${OLDWRKDIR}
 			;;
 		esac
@@ -411,10 +392,6 @@ first_of_all()
 	if [ -n "${OLDWRKDIR}" ]; then
 		echo "Using working directory ${WRKDIR} instead of default."
 	fi
-
-	echo 'Allow X11RDP-RH-Matic to gain root privileges.'
-	echo 'Type your password if required.'
-	sudo -v
 }
 
 #
