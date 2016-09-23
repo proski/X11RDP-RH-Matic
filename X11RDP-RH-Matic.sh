@@ -40,7 +40,7 @@ SUDO_LOG=${WRKDIR}/sudo.log
 RPMS_DIR=$(rpm --eval %{_rpmdir}/%{_arch})
 BUILD_DIR=$(rpm --eval %{_builddir})
 SOURCE_DIR=$(rpm --eval %{_sourcedir})
-X11RDPBASE=/usr/local/x11rdp
+X11RDPBASE=/usr/local/x11rdp.$(date '+%F__%T')
 
 # variables for this utility
 TARGETS="x11rdp"
@@ -205,15 +205,10 @@ clone()
 
 x11rdp_dirty_build()
 {
-	# remove installed x11rdp before build x11rdp
-	check_if_installed x11rdp
-	if [ $? -eq 0 ]; then
-		SUDO_CMD $DNF -y remove x11rdp >> $DNF_LOG || error_exit
-	fi
-
 	# clean X11RDPBASE
 	if [ -d $X11RDPBASE ]; then
-		SUDO_CMD find $X11RDPBASE -delete
+		echo "FATAL: $X11RDPBASE exists already" >&2
+		exit 1
 	fi
 
 	# extract xrdp source
@@ -237,7 +232,7 @@ x11rdp_dirty_build()
 
 	# cleanup installed files during the build
 	if [ -d $X11RDPBASE ]; then
-		SUDO_CMD find $X11RDPBASE -delete
+		find $X11RDPBASE -delete
 	fi
 }
 
