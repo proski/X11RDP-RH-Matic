@@ -108,25 +108,8 @@ install_depends()
 {
 	for f in $@; do
 		echo -n "Checking for ${f}... "
-		check_if_installed $f
-		if [ $? -eq 0 ]; then
-			echo "yes"
-		else
-			echo "no"
-			echo -n "Installing $f... "
-			SUDO_CMD $DNF -y install $f >> $DNF_LOG && echo "done" || error_exit
-		fi
-		sleep 0.1
+		check_rpm_installed $f
 	done
-}
-
-check_if_installed()
-{
-	if [ "$(repoquery --all --installed --qf="%{name}" "$1")" = "$1" ]; then
-		return 0
-	else
-		return 1
-	fi
 }
 
 calculate_version_num()
@@ -432,10 +415,6 @@ first_of_all()
 	echo 'Allow X11RDP-RH-Matic to gain root privileges.'
 	echo 'Type your password if required.'
 	sudo -v
-
-	# first of all, check if yum-utils installed
-	echo 'First of all, checking for necessary programs to run this script... '
-	check_rpm_installed yum-utils
 }
 
 #
