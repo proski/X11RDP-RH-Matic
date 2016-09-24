@@ -30,12 +30,15 @@ GH_PROJECT=xrdp
 GH_BRANCH=devel
 GH_URL=https://github.com/${GH_ACCOUNT}/${GH_PROJECT}.git
 
-WRKDIR=$(mktemp --directory --suffix .X11RDP-RH-Matic)
+TAG=$(date '+%F__%T' | sed 's/\W/_/g')
+WRKDIR=$(pwd)/build.$TAG
 BUILD_LOG=${WRKDIR}/build.log
 RPMS_DIR=$(rpm --eval %{_rpmdir}/%{_arch})
 BUILD_DIR=$(rpm --eval %{_builddir})
 SOURCE_DIR=$(rpm --eval %{_sourcedir})
-X11RDPBASE=/usr/local/x11rdp.$(date '+%F__%T')
+X11RDPBASE=$(pwd)/x11rdp.$TAG
+
+mkdir -p $WRKDIR
 
 # variables for this utility
 TARGETS="x11rdp"
