@@ -92,16 +92,6 @@ generate_spec()
 	calc_cpu_cores
 	echo -n 'Generating RPM spec files... '
 
-	# replace common variables in spec templates
-	for f in SPECS/*.spec.in
-	do
-		sed \
-		-e "s/%%GH_ACCOUNT%%/${GH_ACCOUNT}/g" \
-		-e "s/%%GH_PROJECT%%/${GH_PROJECT}/g" \
-		-e "s/%%GH_COMMIT%%/${GH_COMMIT}/g" \
-		< $f > ${WRKDIR}/$(basename ${f%.in}) || error_exit
-	done
-
 	sed -i.bak \
 	-e "s|%%X11RDPBASE%%|$X11RDPBASE|g" \
 	-e "s|make -j1|${makeCommand}|g" \
@@ -112,8 +102,7 @@ generate_spec()
 
 clone()
 {
-	GH_COMMIT=$(git ls-remote --heads $GH_URL | grep $GH_BRANCH | head -c7)
-	WRKSRC=${GH_ACCOUNT}-${GH_PROJECT}-${GH_COMMIT}
+	WRKSRC=x11rdp
 	DISTFILE=${WRKSRC}.tar.gz
 	echo -n 'Cloning source code... '
 

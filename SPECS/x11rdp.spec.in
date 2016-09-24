@@ -7,7 +7,7 @@ Version:	0.9.0
 License:	MIT
 Release:	1%{?dist}
 URL:		http://www.xrdp.org/
-Source0:	%%GH_ACCOUNT%%-%%GH_PROJECT%%-%%GH_COMMIT%%.tar.gz
+Source0:	x11rdp.tar.gz
 
 Patch0:		buildx_patch.diff
 
