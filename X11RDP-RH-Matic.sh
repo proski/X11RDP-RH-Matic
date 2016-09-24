@@ -42,10 +42,6 @@ META_DEPENDS="rpm-build rpmdevtools"
 FETCH_DEPENDS="ca-certificates git wget"
 EXTRA_SOURCE="xrdp.init xrdp.sysconfig xrdp.logrotate xrdp-pam-auth.patch buildx_patch.diff x11_file_list.patch sesman.ini.master.patch sesman.ini.devel.patch"
 
-# flags
-PARALLELMAKE=true   # increase make jobs
-GIT_USE_HTTPS=true  # Use firewall-friendly https:// instead of git:// to fetch git submodules
-
 # x11rdp
 X11RDP_BUILD_DEPENDS=$(<SPECS/x11rdp.spec.in grep BuildRequires: | awk '{ print $2 }' | tr '\n' ' ')
 
@@ -107,16 +103,9 @@ clone()
 	echo -n 'Cloning source code... '
 
 	if [ ! -f ${SOURCE_DIR}/${DISTFILE} ]; then
-		if $GIT_USE_HTTPS; then
-			git clone ${GH_URL} --branch ${GH_BRANCH} ${WRKDIR}/${WRKSRC} >> $BUILD_LOG 2>&1 || error_exit
-			sed -i -e 's|git://|https://|' ${WRKDIR}/${WRKSRC}/.gitmodules ${WRKDIR}/${WRKSRC}/.git/config
-			(cd ${WRKDIR}/${WRKSRC} && git submodule update --init --recursive)  >> $BUILD_LOG 2>&1
-		else
-			git clone --recursive ${GH_URL} --branch ${GH_BRANCH} ${WRKDIR}/${WRKSRC} >> $BUILD_LOG 2>&1 || error_exit
-		fi
+		git clone --recursive ${GH_URL} --branch ${GH_BRANCH} ${WRKDIR}/${WRKSRC} >> $BUILD_LOG 2>&1 || error_exit
 		tar cfz ${WRKDIR}/${DISTFILE} -C ${WRKDIR} ${WRKSRC} || error_exit
 		cp -a ${WRKDIR}/${DISTFILE} ${SOURCE_DIR}/${DISTFILE} || error_exit
-
 		echo 'done'
 	else
 		echo 'already exists'
@@ -179,44 +168,10 @@ build_rpm()
 	echo "Built RPMs are located in $RPMS_DIR."
 }
 
-parse_commandline_args()
-{
-	# If first switch = --help, display the help/usage message then exit.
-	if [ "$1" = "--help" ]
-	then
-		clear
-		echo "usage: $0 OPTIONS
-OPTIONS
--------
-  --help             : show this help.
-  --https            : Use firewall-friendly https:// instead of git:// to fetch git submodules
-  --nocpuoptimize    : do not change X11rdp build script to utilize more than 1 of your CPU cores."
-		rmdir ${WRKDIR}
-		exit 0
-	fi
-
-	while [ $# -gt 0 ]; do
-		case "$1" in
-		--https)
-			GIT_USE_HTTPS=true
-			;;
-
-		--nocpuoptimize)
-			PARALLELMAKE=false
-			;;
-		esac
-		shift
-	done
-}
-
 calc_cpu_cores()
 {
 	jobs=$(($(nproc) + 1))
-	if $PARALLELMAKE; then
-		makeCommand="make -j $jobs"
-	else
-		makeCommand="make -j 1"
-	fi
+	makeCommand="make -j $jobs"
 }
 
 install_targets_depends()
@@ -236,7 +191,6 @@ first_of_all()
 #  main routines
 #
 
-parse_commandline_args $@
 first_of_all
 install_depends $META_DEPENDS $FETCH_DEPENDS
 rpmdev_setuptree
