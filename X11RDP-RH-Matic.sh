@@ -74,7 +74,6 @@ error_exit()
 	echo_stderr "See logs to get further information:"
 	echo_stderr "	$BUILD_LOG"
 	echo_stderr "Exitting..."
-	[ -f .PID ] && [ "$(cat .PID)" = $$ ] && rm -f .PID
 	exit 1
 }
 
@@ -82,7 +81,6 @@ user_interrupt_exit()
 {
 	echo_stderr; echo_stderr
 	echo_stderr "Script stopped due to user interrupt, exitting..."
-	[ -f .PID ] && [ "$(cat .PID)" = $$ ] && rm -f .PID
 	exit 1
 }
 
@@ -325,7 +323,6 @@ OPTIONS
 show_version()
 {
 	echo "X11RDP-RH-Matic $VERSION $RELEASEDATE"
-	[ -f .PID ] && [ "$(cat .PID)" = $$ ] && rm -f .PID
 	exit 0
 }
 
@@ -368,13 +365,6 @@ first_of_all()
 		error_exit
 	fi
 
-	if [ -f .PID ]; then
-		echo_stderr "Another instance of $0 is already running." 2>&1
-		error_exit
-	else
-		echo $$ > .PID
-	fi
-
 	if [ -n "${OLDWRKDIR}" ]; then
 		echo "Using working directory ${WRKDIR} instead of default."
 	fi
@@ -393,5 +383,4 @@ generate_spec
 install_targets_depends
 build_rpm
 
-[ -f .PID ] && [ "$(cat .PID)" = $$ ] && rm -f .PID
 exit 0
