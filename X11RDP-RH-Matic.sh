@@ -200,38 +200,14 @@ parse_commandline_args()
 OPTIONS
 -------
   --help             : show this help.
-  --branch <branch>  : use one of the available xrdp branches listed above...
-                       Examples:
-                       --branch v0.8    - use the 0.8 branch.
-                       --branch master  - use the master branch. <-- Default if no --branch switch used.
-                       --branch devel   - use the devel branch (Bleeding Edge - may not work properly!)
-                       Branches beginning with \"v\" are stable releases.
-                       The master branch changes when xrdp authors merge changes from the devel branch.
   --https            : Use firewall-friendly https:// instead of git:// to fetch git submodules
   --nocpuoptimize    : do not change X11rdp build script to utilize more than 1 of your CPU cores."
-		get_branches
 		rmdir ${WRKDIR}
 		exit 0
 	fi
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
-		--branch)
-			get_branches
-			if [ $(expr "$BRANCHES" : ".*${2}.*") -ne 0 ]; then
-				GH_BRANCH=$2
-			else
-				echo "**** Error detected in branch selection. Argument after --branch was : $2 ."
-				echo "**** Available branches : "$BRANCHES
-				exit 1
-			fi
-			echo "Using branch ==>> $GH_BRANCH <<=="
-			if [ $GH_BRANCH = 'devel' ]; then
-				echo "Note : using the bleeding-edge version may result in problems :)"
-			fi
-			echo $LINE
-			;;
-
 		--https)
 			GIT_USE_HTTPS=true
 			;;
@@ -242,16 +218,6 @@ OPTIONS
 		esac
 		shift
 	done
-}
-
-get_branches()
-{
-	echo $LINE
-	echo "Obtaining list of available branches..."
-	echo $LINE
-	BRANCHES=$(git ls-remote --heads $GH_URL | cut -f2 | cut -d "/" -f 3)
-	echo $BRANCHES
-	echo $LINE
 }
 
 calc_cpu_cores()
