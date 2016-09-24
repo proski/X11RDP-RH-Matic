@@ -10,17 +10,6 @@ if [ $UID -eq 0 ] ; then
 	exit 1
 fi
 
-# Check if an rpm package is installed.
-# If not, exit with an error message.
-check_rpm_installed()
-{
-	rpm -q --whatprovides $1 || exit 1
-}
-
-LINE="----------------------------------------------------------------------"
-
-PATH=/bin:/sbin:/usr/bin:/usr/sbin
-
 # xrdp repository
 GH_ACCOUNT=proski
 GH_PROJECT=xrdp
@@ -37,12 +26,6 @@ X11RDPBASE=$(pwd)/x11rdp.$TAG
 
 mkdir -p $WRKDIR
 
-# variables for this utility
-META_DEPENDS="rpm-build rpmdevtools"
-FETCH_DEPENDS="ca-certificates git wget"
-
-# x11rdp
-X11RDP_BUILD_DEPENDS=$(<SPECS/x11rdp.spec.in grep BuildRequires: | awk '{ print $2 }' | tr '\n' ' ')
 
 echo_stderr()
 {
@@ -66,11 +49,13 @@ user_interrupt_exit()
 	exit 1
 }
 
+# Check if rpm packages are installed.
+# If not, exit with an error message.
 install_depends()
 {
 	for f in $@; do
 		echo -n "Checking for ${f}... "
-		check_rpm_installed $f
+		rpm -q --whatprovides $f || exit 1
 	done
 }
 
@@ -170,11 +155,6 @@ calc_cpu_cores()
 	makeCommand="make -j $jobs"
 }
 
-install_targets_depends()
-{
-	install_depends $X11RDP_BUILD_DEPENDS
-}
-
 first_of_all()
 {
 	if [ ! -f SPECS/x11rdp.spec.in ]; then
@@ -188,11 +168,17 @@ first_of_all()
 #
 
 first_of_all
-install_depends $META_DEPENDS $FETCH_DEPENDS
+
+# variables for this utility
+TOOL_DEPENDS="rpm-build rpmdevtools ca-certificates git wget"
+
+# x11rdp
+X11RDP_BUILD_DEPENDS=$(<SPECS/x11rdp.spec.in grep BuildRequires: | awk '{ print $2 }' | tr '\n' ' ')
+
+install_depends $TOOL_DEPENDS $X11RDP_BUILD_DEPENDS
 rpmdev_setuptree
 clone
 generate_spec
-install_targets_depends
 build_rpm
 
 exit 0
