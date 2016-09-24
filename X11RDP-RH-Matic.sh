@@ -41,7 +41,6 @@ X11RDPBASE=$(pwd)/x11rdp.$TAG
 mkdir -p $WRKDIR
 
 # variables for this utility
-TARGETS="x11rdp"
 META_DEPENDS="rpm-build rpmdevtools"
 FETCH_DEPENDS="ca-certificates git wget"
 EXTRA_SOURCE="xrdp.init xrdp.sysconfig xrdp.logrotate xrdp-pam-auth.patch buildx_patch.diff x11_file_list.patch sesman.ini.master.patch sesman.ini.devel.patch"
@@ -194,14 +193,9 @@ build_rpm()
 		cp SOURCES/${f} $SOURCE_DIR
 	done
 
-	for f in $TARGETS; do
-		echo -n "Building ${f}... "
-		case "${f}" in
-			x11rdp) x11rdp_dirty_build || error_exit ;;
-			*) rpmbuild -ba ${WRKDIR}/${f}.spec >> $BUILD_LOG 2>&1 || error_exit ;;
-		esac
-		echo 'done'
-	done
+	echo -n "Building x11rdp... "
+	x11rdp_dirty_build || error_exit
+	echo 'done'
 
 	echo "Built RPMs are located in $RPMS_DIR."
 }
@@ -265,10 +259,6 @@ OPTIONS
 			PARALLELMAKE=false
 			;;
 
-		--nox11rdp)
-			TARGETS=${TARGETS//x11rdp/}
-			;;
-
 		--tmpdir)
 			if [ ! -d "${2}" ]; then
 			 	echo_stderr "Invalid working directory '${2}' specified."
@@ -312,11 +302,7 @@ calc_cpu_cores()
 
 install_targets_depends()
 {
-	for t in $TARGETS; do
-		case "$t" in
-			x11rdp) install_depends $X11RDP_BUILD_DEPENDS ;;
-		esac
-	done
+	install_depends $X11RDP_BUILD_DEPENDS
 }
 
 first_of_all()
