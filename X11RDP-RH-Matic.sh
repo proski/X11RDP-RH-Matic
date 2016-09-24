@@ -84,14 +84,9 @@ install_depends()
 
 calculate_version_num()
 {
-	echo -n 'Calculating RPM version number... '
 	if [ -e ${WRKDIR}/${WRKWRC} ]; then
 		tar zxf ${SOURCE_DIR}/${DISTFILE} -C ${WRKDIR} || error_exit
 	fi
-	XRDPVER=$(cd ${WRKDIR}/${WRKSRC}; grep xrdp readme.txt | head -1 | cut -d " " -f2)
-	XRDPVER=${XRDPVER}.git${GH_COMMIT}
-
-	echo xrdp=$XRDPVER
 }
 
 generate_spec()
@@ -104,8 +99,6 @@ generate_spec()
 	for f in SPECS/*.spec.in
 	do
 		sed \
-		-e "s/%%XRDPVER%%/${XRDPVER}/g" \
-		-e "s/%%XRDPBRANCH%%/${GH_BRANCH//-/_}/g" \
 		-e "s/%%GH_ACCOUNT%%/${GH_ACCOUNT}/g" \
 		-e "s/%%GH_PROJECT%%/${GH_PROJECT}/g" \
 		-e "s/%%GH_COMMIT%%/${GH_COMMIT}/g" \
