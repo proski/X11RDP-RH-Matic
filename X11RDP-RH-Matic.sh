@@ -92,10 +92,10 @@ generate_spec()
 	calc_cpu_cores
 	echo -n 'Generating RPM spec files... '
 
-	sed -i.bak \
+	sed \
 	-e "s|%%X11RDPBASE%%|$X11RDPBASE|g" \
 	-e "s|make -j1|${makeCommand}|g" \
-	${WRKDIR}/x11rdp.spec || error_exit
+	SPECS/x11rdp.spec.in > ${WRKDIR}/x11rdp.spec || error_exit
 
 	echo 'done'
 }
