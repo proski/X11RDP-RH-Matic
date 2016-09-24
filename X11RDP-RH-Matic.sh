@@ -51,14 +51,9 @@ XRDP_CONFIGURE_ARGS="--enable-fuse --enable-rfxcodec --enable-jpeg --disable-sta
 PARALLELMAKE=true   # increase make jobs
 GIT_USE_HTTPS=true  # Use firewall-friendly https:// instead of git:// to fetch git submodules
 
-# substitutes
-XORGXRDPDEBUG_SUB="# "
-
 # xrdp dependencies
 XRDP_BASIC_BUILD_DEPENDS=$(<SPECS/xrdp.spec.in grep BuildRequires: | grep -v %% | awk '{ print $2 }' | tr '\n' ' ')
 XRDP_ADDITIONAL_BUILD_DEPENDS="libjpeg-turbo-devel fuse-devel"
-# xorg driver build dependencies
-XORGXRDP_BUILD_DEPENDS=$(<SPECS/xorg-x11-drv-xrdp.spec.in grep BuildRequires: | grep -v %% | awk '{ print $2 }' | tr '\n' ' ')
 # x11rdp
 X11RDP_BUILD_DEPENDS=$(<SPECS/x11rdp.spec.in grep BuildRequires: | awk '{ print $2 }' | tr '\n' ' ')
 
@@ -99,10 +94,9 @@ calculate_version_num()
 		tar zxf ${SOURCE_DIR}/${DISTFILE} -C ${WRKDIR} || error_exit
 	fi
 	XRDPVER=$(cd ${WRKDIR}/${WRKSRC}; grep xrdp readme.txt | head -1 | cut -d " " -f2)
-	XORGXRDPVER=${XRDPVER}.git$(cd ${WRKDIR}/${WRKSRC}/xorgxrdp; git rev-parse HEAD | head -c7)
 	XRDPVER=${XRDPVER}.git${GH_COMMIT}
 
-	echo xrdp=$XRDPVER xorgxrdp=$XORGXRDPVER
+	echo xrdp=$XRDPVER
 }
 
 generate_spec()
@@ -116,18 +110,12 @@ generate_spec()
 	do
 		sed \
 		-e "s/%%XRDPVER%%/${XRDPVER}/g" \
-		-e "s/%%XORGXRDPVER%%/${XORGXRDPVER}/g" \
 		-e "s/%%XRDPBRANCH%%/${GH_BRANCH//-/_}/g" \
 		-e "s/%%GH_ACCOUNT%%/${GH_ACCOUNT}/g" \
 		-e "s/%%GH_PROJECT%%/${GH_PROJECT}/g" \
 		-e "s/%%GH_COMMIT%%/${GH_COMMIT}/g" \
 		< $f > ${WRKDIR}/$(basename ${f%.in}) || error_exit
 	done
-
-	sed -i.bak \
-	-e "s/%%BUILDREQUIRES%%/${XORGXRDP_BUILD_DEPENDS}/g" \
-	-e "s/%%XORGXRDPDEBUG%%/${XORGXRDPDEBUG_SUB}/g" \
-	${WRKDIR}/xorg-x11-drv-xrdp.spec || error_exit
 
 	sed -i.bak \
 	-e "s/%%BUILDREQUIRES%%/${XRDP_ADDITIONAL_BUILD_DEPENDS}/g" \
@@ -251,8 +239,6 @@ OPTIONS
   --cleanup          : remove X11rdp / xrdp source code after installation. (Default is to keep it).
   --noinstall        : do not install anything, just build the packages
   --nox11rdp         : do not build and install x11rdp
-  --with-xorg-driver : build and install xorg-driver
-  --xorgxrdpdebug    : increase log level of xorgxrdp
   --tmpdir <dir>     : specify working directory prefix (/tmp is default)"
 		get_branches
 		rmdir ${WRKDIR}
@@ -291,18 +277,6 @@ OPTIONS
 
 		--nox11rdp)
 			TARGETS=${TARGETS//x11rdp/}
-			;;
-
-		--with-xorg-driver)
-			TARGETS="$TARGETS xorg-x11-drv-xrdp"
-			;;
-
-		--with-xorgxrdp) # alias for --with-xorg-driver
-			TARGETS="$TARGETS xorg-x11-drv-xrdp"
-			;;
-
-		--xorgxrdpdebug)
-			XORGXRDPDEBUG_SUB=""
 			;;
 
 		--tmpdir)
@@ -352,7 +326,6 @@ install_targets_depends()
 		case "$t" in
 			xrdp) install_depends $XRDP_BASIC_BUILD_DEPENDS $XRDP_ADDITIONAL_BUILD_DEPENDS;;
 			x11rdp) install_depends $X11RDP_BUILD_DEPENDS ;;
-			xorg-x11-drv-xrdp) install_depends $XORGXRDP_BUILD_DEPENDS;;
 		esac
 	done
 }
