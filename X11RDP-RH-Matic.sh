@@ -1,7 +1,4 @@
-#!/bin/bash
-# vim:ts=2:sw=2:sts=0:number
-VERSION=2.0.0
-RELEASEDATE=20160725
+#! /bin/bash
 
 trap user_interrupt_exit 2
 
@@ -203,7 +200,6 @@ parse_commandline_args()
 OPTIONS
 -------
   --help             : show this help.
-  --version          : show version.
   --branch <branch>  : use one of the available xrdp branches listed above...
                        Examples:
                        --branch v0.8    - use the 0.8 branch.
@@ -220,10 +216,6 @@ OPTIONS
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
-		--version)
-			show_version
-		;;
-
 		--branch)
 			get_branches
 			if [ $(expr "$BRANCHES" : ".*${2}.*") -ne 0 ]; then
@@ -250,12 +242,6 @@ OPTIONS
 		esac
 		shift
 	done
-}
-
-show_version()
-{
-	echo "X11RDP-RH-Matic $VERSION $RELEASEDATE"
-	exit 0
 }
 
 get_branches()
@@ -285,9 +271,8 @@ install_targets_depends()
 
 first_of_all()
 {
-	clear
-	if [ ! -f X11RDP-RH-Matic.sh ]; then
-		echo_stderr "Make sure you are in X11RDP-RH-Matic directory." 2>&1
+	if [ ! -f SPECS/x11rdp.spec.in ]; then
+		echo_stderr "Make sure this script is run in its directory" 2>&1
 		error_exit
 	fi
 }
