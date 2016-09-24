@@ -212,11 +212,7 @@ OPTIONS
                        Branches beginning with \"v\" are stable releases.
                        The master branch changes when xrdp authors merge changes from the devel branch.
   --https            : Use firewall-friendly https:// instead of git:// to fetch git submodules
-  --nocpuoptimize    : do not change X11rdp build script to utilize more than 1 of your CPU cores.
-  --cleanup          : remove X11rdp / xrdp source code after installation. (Default is to keep it).
-  --noinstall        : do not install anything, just build the packages
-  --nox11rdp         : do not build and install x11rdp
-  --tmpdir <dir>     : specify working directory prefix (/tmp is default)"
+  --nocpuoptimize    : do not change X11rdp build script to utilize more than 1 of your CPU cores."
 		get_branches
 		rmdir ${WRKDIR}
 		exit 0
@@ -250,17 +246,6 @@ OPTIONS
 
 		--nocpuoptimize)
 			PARALLELMAKE=false
-			;;
-
-		--tmpdir)
-			if [ ! -d "${2}" ]; then
-			 	echo_stderr "Invalid working directory '${2}' specified."
-				exit 1
-			fi
-			OLDWRKDIR=${WRKDIR}
-			WRKDIR=$(mktemp --directory --suffix .X11RDP-RH-Matic --tmpdir="${2}") || exit 1
-			BUILD_LOG=${WRKDIR}/build.log
-			rmdir ${OLDWRKDIR}
 			;;
 		esac
 		shift
@@ -304,10 +289,6 @@ first_of_all()
 	if [ ! -f X11RDP-RH-Matic.sh ]; then
 		echo_stderr "Make sure you are in X11RDP-RH-Matic directory." 2>&1
 		error_exit
-	fi
-
-	if [ -n "${OLDWRKDIR}" ]; then
-		echo "Using working directory ${WRKDIR} instead of default."
 	fi
 }
 
