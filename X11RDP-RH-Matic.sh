@@ -45,15 +45,11 @@ TARGETS="x11rdp"
 META_DEPENDS="rpm-build rpmdevtools"
 FETCH_DEPENDS="ca-certificates git wget"
 EXTRA_SOURCE="xrdp.init xrdp.sysconfig xrdp.logrotate xrdp-pam-auth.patch buildx_patch.diff x11_file_list.patch sesman.ini.master.patch sesman.ini.devel.patch"
-XRDP_CONFIGURE_ARGS="--enable-fuse --enable-rfxcodec --enable-jpeg --disable-static"
 
 # flags
 PARALLELMAKE=true   # increase make jobs
 GIT_USE_HTTPS=true  # Use firewall-friendly https:// instead of git:// to fetch git submodules
 
-# xrdp dependencies
-XRDP_BASIC_BUILD_DEPENDS=$(<SPECS/xrdp.spec.in grep BuildRequires: | grep -v %% | awk '{ print $2 }' | tr '\n' ' ')
-XRDP_ADDITIONAL_BUILD_DEPENDS="libjpeg-turbo-devel fuse-devel"
 # x11rdp
 X11RDP_BUILD_DEPENDS=$(<SPECS/x11rdp.spec.in grep BuildRequires: | awk '{ print $2 }' | tr '\n' ' ')
 
@@ -116,11 +112,6 @@ generate_spec()
 		-e "s/%%GH_COMMIT%%/${GH_COMMIT}/g" \
 		< $f > ${WRKDIR}/$(basename ${f%.in}) || error_exit
 	done
-
-	sed -i.bak \
-	-e "s/%%BUILDREQUIRES%%/${XRDP_ADDITIONAL_BUILD_DEPENDS}/g" \
-	-e "s/%%CONFIGURE_ARGS%%/${XRDP_CONFIGURE_ARGS}/g" \
-	${WRKDIR}/xrdp.spec || error_exit
 
 	sed -i.bak \
 	-e "s|%%X11RDPBASE%%|$X11RDPBASE|g" \
@@ -206,7 +197,6 @@ build_rpm()
 	for f in $TARGETS; do
 		echo -n "Building ${f}... "
 		case "${f}" in
-			xrdp) QA_RPATHS=$[0x0001] rpmbuild -ba ${WRKDIR}/${f}.spec >> $BUILD_LOG 2>&1 || error_exit ;;
 			x11rdp) x11rdp_dirty_build || error_exit ;;
 			*) rpmbuild -ba ${WRKDIR}/${f}.spec >> $BUILD_LOG 2>&1 || error_exit ;;
 		esac
@@ -324,7 +314,6 @@ install_targets_depends()
 {
 	for t in $TARGETS; do
 		case "$t" in
-			xrdp) install_depends $XRDP_BASIC_BUILD_DEPENDS $XRDP_ADDITIONAL_BUILD_DEPENDS;;
 			x11rdp) install_depends $X11RDP_BUILD_DEPENDS ;;
 		esac
 	done
