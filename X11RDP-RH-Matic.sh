@@ -31,14 +31,14 @@ error_exit()
   echo_stderr "Oops, something going wrong around line: $BASH_LINENO"
   echo_stderr "See logs to get further information:"
   echo_stderr "  $BUILD_LOG"
-  echo_stderr "Exitting..."
+  echo_stderr "Exiting..."
   exit 1
 }
 
 user_interrupt_exit()
 {
   echo_stderr; echo_stderr
-  echo_stderr "Script stopped due to user interrupt, exitting..."
+  echo_stderr "Script stopped due to user interrupt, exiting..."
   exit 1
 }
 
