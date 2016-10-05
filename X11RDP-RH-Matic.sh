@@ -53,6 +53,11 @@ x11rdp_dirty_build()
 	# extract xrdp source
 	tar zxf ${SOURCE_DIR}/${DISTFILE} -C $WRKDIR || error_exit
 
+	# Link cache directory
+	X11RDP_CACHE=~/.cache/x11rdp
+	mkdir -p $X11RDP_CACHE
+	ln -s $X11RDP_CACHE ${WRKDIR}/${WRKSRC}/xorg/X11R7.6/downloads
+
 	# build x11rdp once into $X11RDPBASE
 	(
 	cd ${WRKDIR}/${WRKSRC}/xorg/X11R7.6 && \
