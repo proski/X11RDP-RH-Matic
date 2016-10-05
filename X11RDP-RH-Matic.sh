@@ -128,11 +128,6 @@ sed -i.bak \
 
 QA_RPATHS=$[0x0001|0x0002] rpmbuild -ba ${WRKDIR}/x11rdp.spec >> $BUILD_LOG 2>&1 || error_exit
 
-# cleanup installed files during the build
-if [ -d $X11RDPBASE ]; then
-  find $X11RDPBASE -delete
-fi
-
 echo 'done'
 echo "Built RPMs are located in $RPMS_DIR."
 
