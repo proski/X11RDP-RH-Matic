@@ -22,61 +22,26 @@ mkdir -p $WRKDIR
 
 echo_stderr()
 {
-	echo $@ 1>&2
+  echo $@ 1>&2
 }
 
 error_exit()
 {
-	echo_stderr; echo_stderr
-	echo_stderr "Oops, something going wrong around line: $BASH_LINENO"
-	echo_stderr "See logs to get further information:"
-	echo_stderr "	$BUILD_LOG"
-	echo_stderr "Exitting..."
-	exit 1
+  echo_stderr; echo_stderr
+  echo_stderr "Oops, something going wrong around line: $BASH_LINENO"
+  echo_stderr "See logs to get further information:"
+  echo_stderr "  $BUILD_LOG"
+  echo_stderr "Exitting..."
+  exit 1
 }
 
 user_interrupt_exit()
 {
-	echo_stderr; echo_stderr
-	echo_stderr "Script stopped due to user interrupt, exitting..."
-	exit 1
+  echo_stderr; echo_stderr
+  echo_stderr "Script stopped due to user interrupt, exitting..."
+  exit 1
 }
 
-x11rdp_dirty_build()
-{
-	# clean X11RDPBASE
-	if [ -d $X11RDPBASE ]; then
-		echo "FATAL: $X11RDPBASE exists already" >&2
-		exit 1
-	fi
-
-	# extract xrdp source
-	tar zxf ${SOURCE_DIR}/${DISTFILE} -C $WRKDIR || error_exit
-
-	# Link cache directory
-	X11RDP_CACHE=~/.cache/x11rdp
-	mkdir -p $X11RDP_CACHE
-	ln -s $X11RDP_CACHE ${WRKDIR}/${WRKSRC}/xorg/X11R7.6/downloads
-
-	# build x11rdp once into $X11RDPBASE
-	(
-	cd ${WRKDIR}/${WRKSRC}/xorg/X11R7.6 && \
-	sed -i.bak \
-		-e 's/if ! mkdir $PREFIX_DIR/if ! mkdir -p $PREFIX_DIR/' \
-		-e 's/wget -cq/wget -cq --retry-connrefused --waitretry=10/' \
-		-e "s/make -j 1/make -j $jobs/g" \
-		-e 's|^download_url=http://server1.xrdp.org/xrdp/X11R7.6|download_url=https://xrdp.vmeta.jp/pub/xrdp/X11R7.6|' \
-		buildx.sh >> $BUILD_LOG 2>&1 && \
-	./buildx.sh $X11RDPBASE >> $BUILD_LOG 2>&1
-	) || error_exit
-
-	QA_RPATHS=$[0x0001|0x0002] rpmbuild -ba ${WRKDIR}/x11rdp.spec >> $BUILD_LOG 2>&1 || error_exit
-
-	# cleanup installed files during the build
-	if [ -d $X11RDPBASE ]; then
-		find $X11RDPBASE -delete
-	fi
-}
 
 # Sanity checks
 if [ $UID -eq 0 ]; then
@@ -132,9 +97,42 @@ echo 'done'
 # Build rpm package
 echo 'Building RPMs started, please be patient... '
 echo 'Do the following command to see build progress.'
-echo "	$ tail -f $BUILD_LOG"
+echo "  tail -f $BUILD_LOG"
 echo -n "Building x11rdp... "
-x11rdp_dirty_build || error_exit
+
+# clean X11RDPBASE
+if [ -d $X11RDPBASE ]; then
+  echo "FATAL: $X11RDPBASE exists already" >&2
+  exit 1
+fi
+
+# extract xrdp source
+tar zxf ${SOURCE_DIR}/${DISTFILE} -C $WRKDIR || error_exit
+
+# Link cache directory
+X11RDP_CACHE=~/.cache/x11rdp
+mkdir -p $X11RDP_CACHE
+ln -s $X11RDP_CACHE ${WRKDIR}/${WRKSRC}/xorg/X11R7.6/downloads
+
+# build x11rdp once into $X11RDPBASE
+(
+cd ${WRKDIR}/${WRKSRC}/xorg/X11R7.6 && \
+sed -i.bak \
+  -e 's/if ! mkdir $PREFIX_DIR/if ! mkdir -p $PREFIX_DIR/' \
+  -e 's/wget -cq/wget -cq --retry-connrefused --waitretry=10/' \
+  -e "s/make -j 1/make -j $jobs/g" \
+  -e 's|^download_url=http://server1.xrdp.org/xrdp/X11R7.6|download_url=https://xrdp.vmeta.jp/pub/xrdp/X11R7.6|' \
+  buildx.sh >> $BUILD_LOG 2>&1 && \
+./buildx.sh $X11RDPBASE >> $BUILD_LOG 2>&1
+) || error_exit
+
+QA_RPATHS=$[0x0001|0x0002] rpmbuild -ba ${WRKDIR}/x11rdp.spec >> $BUILD_LOG 2>&1 || error_exit
+
+# cleanup installed files during the build
+if [ -d $X11RDPBASE ]; then
+  find $X11RDPBASE -delete
+fi
+
 echo 'done'
 echo "Built RPMs are located in $RPMS_DIR."
 
