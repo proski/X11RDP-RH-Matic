@@ -2,13 +2,6 @@
 
 trap user_interrupt_exit 2
 
-if [ $UID -eq 0 ] ; then
-	# write to stderr 1>&2
-	echo "${0}:  Never run this utility as root." 1>&2
-	echo 1>&2
-	echo "This utility builds RPMs. Building RPM's as root is seriously dangerous." 1>&2
-	exit 1
-fi
 
 # xrdp repository
 GH_ACCOUNT=proski
@@ -49,53 +42,6 @@ user_interrupt_exit()
 	exit 1
 }
 
-# Check if rpm packages are installed.
-# If not, exit with an error message.
-install_depends()
-{
-	for f in $@; do
-		echo -n "Checking for ${f}... "
-		rpm -q --whatprovides $f || exit 1
-	done
-}
-
-calculate_version_num()
-{
-	if [ -e ${WRKDIR}/${WRKWRC} ]; then
-		tar zxf ${SOURCE_DIR}/${DISTFILE} -C ${WRKDIR} || error_exit
-	fi
-}
-
-generate_spec()
-{
-	calculate_version_num
-	calc_cpu_cores
-	echo -n 'Generating RPM spec files... '
-
-	sed \
-	-e "s|%%X11RDPBASE%%|$X11RDPBASE|g" \
-	-e "s|make -j1|${makeCommand}|g" \
-	SPECS/x11rdp.spec.in > ${WRKDIR}/x11rdp.spec || error_exit
-
-	echo 'done'
-}
-
-clone()
-{
-	WRKSRC=x11rdp
-	DISTFILE=${WRKSRC}.tar.gz
-	echo -n 'Cloning source code... '
-
-	if [ ! -f ${SOURCE_DIR}/${DISTFILE} ]; then
-		git clone --recursive ${GH_URL} --branch ${GH_BRANCH} ${WRKDIR}/${WRKSRC} >> $BUILD_LOG 2>&1 || error_exit
-		tar cfz ${WRKDIR}/${DISTFILE} -C ${WRKDIR} ${WRKSRC} || error_exit
-		cp -a ${WRKDIR}/${DISTFILE} ${SOURCE_DIR}/${DISTFILE} || error_exit
-		echo 'done'
-	else
-		echo 'already exists'
-	fi
-}
-
 x11rdp_dirty_build()
 {
 	# clean X11RDPBASE
@@ -127,56 +73,64 @@ x11rdp_dirty_build()
 	fi
 }
 
-rpmdev_setuptree()
-{
-	echo -n 'Setting up rpmbuild tree... '
-	rpmdev-setuptree && \
-	echo 'done'
-}
+# Sanity checks
+if [ $UID -eq 0 ]; then
+  echo_stderr "Don't run this script as root" 2>&1
+  error_exit
+fi
 
-build_rpm()
-{
-	echo 'Building RPMs started, please be patient... '
-	echo 'Do the following command to see build progress.'
-	echo "	$ tail -f $BUILD_LOG"
+if [ ! -f SPECS/x11rdp.spec.in ]; then
+  echo_stderr "Make sure this script is run in its directory" 2>&1
+  error_exit
+fi
 
-	echo -n "Building x11rdp... "
-	x11rdp_dirty_build || error_exit
-	echo 'done'
-
-	echo "Built RPMs are located in $RPMS_DIR."
-}
-
-calc_cpu_cores()
-{
-	jobs=$(($(nproc) + 1))
-	makeCommand="make -j $jobs"
-}
-
-first_of_all()
-{
-	if [ ! -f SPECS/x11rdp.spec.in ]; then
-		echo_stderr "Make sure this script is run in its directory" 2>&1
-		error_exit
-	fi
-}
-
-#
-#  main routines
-#
-
-first_of_all
-
-# variables for this utility
+# Dependencies for this utility
 TOOL_DEPENDS="rpm-build rpmdevtools ca-certificates git wget"
 
-# x11rdp
-X11RDP_BUILD_DEPENDS=$(<SPECS/x11rdp.spec.in grep BuildRequires: | awk '{ print $2 }' | tr '\n' ' ')
+# x11rdp dependencies
+X11RDP_BUILD_DEPENDS=$(grep BuildRequires: SPECS/x11rdp.spec.in | awk '{ print $2 }' | tr '\n' ' ')
 
-install_depends $TOOL_DEPENDS $X11RDP_BUILD_DEPENDS
-rpmdev_setuptree
-clone
-generate_spec
-build_rpm
+# Make sure the dependencies are installed
+for f in $TOOL_DEPENDS $X11RDP_BUILD_DEPENDS; do
+  echo -n "Checking for ${f}... "
+  rpm -q --whatprovides $f || exit 1
+done
+
+# Set up rpm build tree
+rpmdev-setuptree
+
+WRKSRC=x11rdp
+DISTFILE=${WRKSRC}.tar.gz
+
+# Clone source code
+echo -n 'Cloning source code... '
+if [ ! -f ${SOURCE_DIR}/${DISTFILE} ]; then
+  git clone --recursive ${GH_URL} --branch ${GH_BRANCH} ${WRKDIR}/${WRKSRC} >> $BUILD_LOG 2>&1 || error_exit
+  tar cfz ${WRKDIR}/${DISTFILE} -C ${WRKDIR} ${WRKSRC} || error_exit
+  cp -a ${WRKDIR}/${DISTFILE} ${SOURCE_DIR}/${DISTFILE} || error_exit
+  echo 'done'
+else
+  echo 'already exists'
+fi
+
+jobs=$(($(nproc) + 1))
+makeCommand="make -j $jobs"
+
+# Generate rpm specfile from template
+echo -n 'Generating RPM spec files... '
+sed \
+-e "s|%%X11RDPBASE%%|$X11RDPBASE|g" \
+-e "s|make -j1|${makeCommand}|g" \
+SPECS/x11rdp.spec.in > ${WRKDIR}/x11rdp.spec || error_exit
+echo 'done'
+
+# Build rpm package
+echo 'Building RPMs started, please be patient... '
+echo 'Do the following command to see build progress.'
+echo "	$ tail -f $BUILD_LOG"
+echo -n "Building x11rdp... "
+x11rdp_dirty_build || error_exit
+echo 'done'
+echo "Built RPMs are located in $RPMS_DIR."
 
 exit 0
