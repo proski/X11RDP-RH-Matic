@@ -13,7 +13,7 @@ GH_URL=https://github.com/${GH_ACCOUNT}/${GH_PROJECT}.git
 
 TAG=$(date '+%F__%T' | sed 's/\W/_/g')
 WRKDIR=$(pwd)/build.$TAG
-BUILD_LOG=${WRKDIR}/build.log
+BUILD_LOG=$(pwd)/build-$TAG.log
 RPMS_DIR=$(rpm --eval %{_rpmdir}/%{_arch})
 SOURCE_DIR=$(rpm --eval %{_sourcedir})
 X11RDPBASE=$(pwd)/x11rdp.$TAG
