@@ -13,7 +13,6 @@ TAG=$(date '+%F__%T' | sed 's/\W/_/g')
 WRKDIR=$(pwd)/build.$TAG
 BUILD_LOG=${WRKDIR}/build.log
 RPMS_DIR=$(rpm --eval %{_rpmdir}/%{_arch})
-BUILD_DIR=$(rpm --eval %{_builddir})
 SOURCE_DIR=$(rpm --eval %{_sourcedir})
 X11RDPBASE=$(pwd)/x11rdp.$TAG
 
