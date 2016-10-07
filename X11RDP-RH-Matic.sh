@@ -75,14 +75,10 @@ DISTFILE=${WRKSRC}.tar.gz
 
 # Clone source code
 echo -n 'Cloning source code... '
-if [ ! -f ${RPM_SRCDIR}/${DISTFILE} ]; then
-  git clone --recursive ${GH_URL} --branch ${GH_BRANCH} ${WRKDIR}/${WRKSRC} >> $BUILD_LOG 2>&1 || error_exit
-  tar cfz ${WRKDIR}/${DISTFILE} -C ${WRKDIR} ${WRKSRC} || error_exit
-  cp -a ${WRKDIR}/${DISTFILE} ${RPM_SRCDIR}/${DISTFILE} || error_exit
-  echo 'done'
-else
-  echo 'already exists'
-fi
+git clone --recursive ${GH_URL} --branch ${GH_BRANCH} ${WRKDIR}/${WRKSRC} >> $BUILD_LOG 2>&1 || error_exit
+tar cfz ${WRKDIR}/${DISTFILE} -C ${WRKDIR} ${WRKSRC} || error_exit
+cp -a ${WRKDIR}/${DISTFILE} ${RPM_SRCDIR}/${DISTFILE} || error_exit
+echo 'done'
 
 jobs=$(($(nproc) + 1))
 makeCommand="make -j $jobs"
