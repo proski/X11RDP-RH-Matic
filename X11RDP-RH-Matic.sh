@@ -1,5 +1,7 @@
 #! /bin/bash
 
+set -eu
+
 trap user_interrupt_exit 2
 
 
