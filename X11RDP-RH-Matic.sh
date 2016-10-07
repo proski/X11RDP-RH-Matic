@@ -15,7 +15,7 @@ TAG=$(date '+%F__%T' | sed 's/\W/_/g')
 WRKDIR=$(pwd)/build.$TAG
 BUILD_LOG=$(pwd)/build-$TAG.log
 RPMS_DIR=$(rpm --eval %{_rpmdir}/%{_arch})
-SOURCE_DIR=$(rpm --eval %{_sourcedir})
+RPM_SRCDIR=$(rpm --eval %{_sourcedir})
 X11RDPBASE=$(pwd)/x11rdp.$TAG
 
 mkdir -p $WRKDIR
@@ -75,10 +75,10 @@ DISTFILE=${WRKSRC}.tar.gz
 
 # Clone source code
 echo -n 'Cloning source code... '
-if [ ! -f ${SOURCE_DIR}/${DISTFILE} ]; then
+if [ ! -f ${RPM_SRCDIR}/${DISTFILE} ]; then
   git clone --recursive ${GH_URL} --branch ${GH_BRANCH} ${WRKDIR}/${WRKSRC} >> $BUILD_LOG 2>&1 || error_exit
   tar cfz ${WRKDIR}/${DISTFILE} -C ${WRKDIR} ${WRKSRC} || error_exit
-  cp -a ${WRKDIR}/${DISTFILE} ${SOURCE_DIR}/${DISTFILE} || error_exit
+  cp -a ${WRKDIR}/${DISTFILE} ${RPM_SRCDIR}/${DISTFILE} || error_exit
   echo 'done'
 else
   echo 'already exists'
@@ -108,7 +108,7 @@ if [ -d $X11RDPBASE ]; then
 fi
 
 # extract xrdp source
-tar zxf ${SOURCE_DIR}/${DISTFILE} -C $WRKDIR || error_exit
+tar zxf ${RPM_SRCDIR}/${DISTFILE} -C $WRKDIR || error_exit
 
 # Link cache directory
 X11RDP_CACHE=~/.cache/x11rdp
